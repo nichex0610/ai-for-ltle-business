@@ -96,3 +96,4 @@ Prompts siempre con: `[1080p, iPhone 17 Pro camera texture, natural indoor light
 2. Validar el workflow antes de crear/actualizar.
 3. Para editar un nodo, cambio parcial; no reemplazar el workflow entero.
 4. Credenciales: usar las credenciales de n8n listadas arriba; nunca pegar claves en nodos ni en el chat.
+5. **Antes de construir cualquier workflow nuevo, buscar primero en la librería de n8n** (n8n.io/api.n8n.io están bloqueados por red en el entorno cloud → usar WebSearch + mirrors accesibles en GitHub como `enescingoz/awesome-n8n-templates`) plantillas reales que hagan algo parecido, y adaptarlas — nunca inventar un workflow nodo a nodo desde cero si ya existe una plantilla funcional que se le parezca.
