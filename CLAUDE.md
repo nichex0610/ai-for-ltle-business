@@ -22,8 +22,17 @@ Genera vídeos UGC estilo iPhone (hiperrealistas, no cinematográficos) en 9:16 
 - 6 nodos: `Listen for incoming events` (Telegram Trigger, con `download: true` + `imageSize: large` para bajar fotos) → `AI Agent` (nodo LangChain, alimentado por `Anthropic Chat Model` como Chat Model) → `Reparar Texto` (Code, arregla el bug de n8n de abajo) → `Telegram` (envía el HTML) → si falla el envío, reintenta por la rama de error con `Correct errors` (escapa `& < > "`).
 - **Analiza imágenes**: si el usuario manda una foto/captura de la ficha del producto (con o sin texto/caption), el `AI Agent` la ve automáticamente — n8n pasa la imagen descargada al modelo como visión (`passthroughBinaryImages`, viene activado por defecto en el nodo Agent). El `systemMessage` le pide leer precio, valoraciones, envío y aspecto directamente de la captura en vez de marcar todo en 🟡 por falta de datos. Si no manda foto, sigue funcionando solo con texto/URL.
 - El `AI Agent` recibe el texto del producto (o un prompt por defecto si solo manda foto) y devuelve el HTML final (con 🟢🔴🟡, veredicto y score) vía su `systemMessage`.
-- 7 checks Organic Ecom evaluados por el agente: WOW / grabable / precio / 4.5★ / proveedor / envío / precio final con envío. Si no hay datos suficientes (ni en texto ni en imagen) para un check, lo marca 🟡 en vez de inventar.
-- Output: HTML a Telegram con 🟢🔴🟡 por check + veredicto (APTO/NO APTO/REVISAR) + score /100.
+- **Prompt basado en el framework oficial** del PDF "Filtros para los productos" de Organic Ecom (Marc Verdú, subido por el usuario). Los 7 checks y sus umbrales exactos:
+  1. Efecto WOW (reacción emocional instantánea, clave para contenido sin pagar publicidad)
+  2. Fácil de grabar (contenido visual sin gastos extra, varios ángulos/usos)
+  3. Precio razonable (no es el número: es el valor percibido vs precio)
+  4. Valoración del producto ≥4,5★ (si no tiene reseñas aún, no se descarta → 🟡)
+  5. Proveedor fiable: ≥93% valoración **Y** +1 año vendiendo (las dos condiciones a la vez)
+  6. Envío ≤25-30 días (si solo se cumple "pagando más", sigue en 🟡 pero ese sobrecoste se arrastra al check 7)
+  7. Precio final con envío: se vuelve a aplicar el criterio de valor percibido sumando el coste de envío
+  - Es un **embudo de descarte secuencial** (no un promedio): un solo 🔴 = producto descartado en ese check. Si todo es 🟢/🟡, el veredicto dice "APTO — enviar a revisión final" (así es como termina el flujo real: revisión de un mentor antes de producir contenido).
+  - Cada check lleva un comentario de 1-2 frases con el PORQUÉ aplicado al producto concreto (no una definición genérica), tal y como pidió el usuario.
+- Output: HTML a Telegram con 🟢🔴🟡 por check + comentario razonado + veredicto (APTO/DESCARTADO en el check X/REVISAR MANUALMENTE) + score orientativo /100.
 - **Bug conocido de n8n** ([n8n-io/n8n#33406](https://github.com/n8n-io/n8n/issues/33406)): el nodo AI Agent con streaming + Claude Sonnet 5 mete saltos de línea sueltos a mitad de palabra en la respuesta (se nota mucho en español por el tokenizer). Workaround aplicado: el nodo `Reparar Texto` quita todos los `\n` (reconstruye las palabras) y vuelve a insertar los saltos de línea correctos antes de cada check/veredicto/score. Si n8n arregla el bug en el futuro, este nodo se puede quitar.
 - Credencial Telegram `Telegram Bot FILTRO` (id `uBmcPl6gZZxlWZjg`) creada con `TELEGRAM_BOT_TOKEN` del entorno. ✅
 - Credencial Anthropic (nodo `Anthropic Chat Model`): creada por el usuario directamente en n8n como `Anthropic account 2` (id `gOgpOMeVH3GoNfho`). ✅
