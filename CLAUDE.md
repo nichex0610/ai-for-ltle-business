@@ -15,7 +15,7 @@ Genera vídeos UGC estilo iPhone (hiperrealistas, no cinematográficos) en 9:16 
 - En la nube no hay n8n-mcp: se trabaja con la API REST de n8n. Hosts a permitir en la red del entorno: `primary-production-a550a.up.railway.app`, `n8n.io`, `api.n8n.io`.
 
 ## Arquitectura (secuencia) — diseño de referencia del sistema antiguo
-[1] FILTRO → [2] RESEARCH → [3] GUION → [4] GANCHO (genera vídeo)
+[1] FILTRO → [2] Estudio de Mercado (RESEARCH) → [3] GUION → [4] GANCHO (genera vídeo)
 
 ### 1 — FILTRO (ID nuevo `ck3GRVqwVUd8PKMv`, instancia a550a) ✅ ACTIVO en producción
 - **Basado en plantilla real de la comunidad n8n** ("Telegram AI bot with LangChain nodes", repo `enescingoz/awesome-n8n-templates`), adaptada — no un workflow inventado nodo a nodo. Patrón estándar "AI Agent": Trigger → Chat Model + AI Agent → Send, con reintento de error igual que la plantilla original.
@@ -40,11 +40,13 @@ Genera vídeos UGC estilo iPhone (hiperrealistas, no cinematográficos) en 9:16 
 - (ID viejo `mpu45nja4mcWxGId` = sistema antiguo, ya no existe.)
 - Nota de red: `n8n.io`, `api.n8n.io` y `docs.n8n.io` siguen bloqueados por la política de red del entorno pese a estar en la lista de hosts a permitir — hay que añadirlos en Settings → Network del entorno si se quiere que Claude navegue la librería de templates directamente en n8n.io (por ahora se busca vía WebSearch + mirrors en GitHub, que sí son accesibles).
 
-### 2 — RESEARCH (ID nuevo `DFytSB97JBn7sr39`, instancia a550a) ✅ ACTIVO en producción
+### 2 — Estudio de Mercado / RESEARCH (ID nuevo `DFytSB97JBn7sr39`, instancia a550a) ✅ ACTIVO en producción
+- Renombrado de "RESEARCH - Organic Ecom" a **"Estudio de Mercado - Organic Ecom"** (mismo ID, mismo workflow).
 - (ID viejo `WzYGgzmCBNv4lEom` = sistema antiguo, ya no existe.)
 - **Basado en plantilla real de n8n** ("Compare sequential, agent-based, and parallel LLM processing with Claude 3.7", n8n.io/workflows/3527): varios nodos Anthropic encadenados, cada uno referenciando la salida del anterior — mismo patrón que esa plantilla.
-- **Trigger**: `n8n Form Trigger` en `https://primary-production-a550a.up.railway.app/form/research-form-trigger` — formulario con 4 campos: Nicho, Producto, Geografía, Detalles adicionales (opcional). Se lanza a mano rellenando el form (no hace falta tocar el workflow).
-- **11 nodos**: Form Trigger → 6 nodos Anthropic en cascada (cada uno usa el nodo estándar `@n8n/n8n-nodes-langchain.anthropic`, resource "text"/operation "message" — no el nodo AI Agent, para evitar el bug de streaming de FILTRO) → `7 - Resumen Final Telegram` (condensa las 6 salidas en UN solo mensaje HTML ≤3500 caracteres, secciones en MAYÚSCULAS+negrita) → `Preparar Mensaje Telegram` (Code, trunca por seguridad si se pasa) → `Telegram - Enviar Research` (manda al chat `541043415`, confirmado real en las pruebas de FILTRO) → si falla el HTML, reintenta por la rama de error con `Correct errors` (mismo patrón que FILTRO).
+- **Trigger**: `n8n Form Trigger` en `https://primary-production-a550a.up.railway.app/form/research-form-trigger` — formulario con 5 campos: Nicho, Producto, Geografía, Detalles adicionales (opcional), **Foto del producto (opcional)**. Se lanza a mano rellenando el form (no hace falta tocar el workflow).
+- **Analiza la foto del producto**: nodo `0 - Descripcion Visual` (Anthropic, vision) — si se sube foto, la describe a fondo (aspecto, colores, cómo se usa, qué genera efecto WOW, cómo grabarla) y esa descripción se inyecta en los prompts 1 (Conciencia de Mercado) y 2 (Competidores); si no hay foto, el nodo devuelve `SIN_IMAGEN` y los prompts siguen solo con texto. El campo de archivo (`fieldType: "file"`, label "Foto del producto") deja el binario en `$binary['Foto_del_producto']` — el nodo Anthropic usa `addAttachments` como expresión (`Boolean($binary['Foto_del_producto'])`) para adjuntarla solo si existe, sin nodo IF aparte.
+- **12 nodos**: Form Trigger → `0 - Descripcion Visual` (vision, condicional) → 6 nodos Anthropic en cascada (cada uno usa el nodo estándar `@n8n/n8n-nodes-langchain.anthropic`, resource "text"/operation "message" — no el nodo AI Agent, para evitar el bug de streaming de FILTRO) → `7 - Resumen Final Telegram` (condensa las 6 salidas en UN solo mensaje HTML ≤3500 caracteres, secciones en MAYÚSCULAS+negrita) → `Preparar Mensaje Telegram` (Code, trunca por seguridad si se pasa) → `Telegram - Enviar Research` (manda al chat `541043415`, confirmado real en las pruebas de FILTRO) → si falla el HTML, reintenta por la rama de error con `Correct errors` (mismo patrón que FILTRO).
 - **Los 6 prompts en cascada** (texto exacto proporcionado por el usuario, en `[NICHO]`/`[PRODUCTO]`/`[GEOGRAFÍA]` se sustituyen los campos del form):
   1. `1 - Conciencia de Mercado` — niveles de Eugene Schwartz + resumen de 3 líneas para el prompt 3.
   2. `2 - Competidores` — presencia orgánica, landing, voz del cliente, brechas (independiente de 1, solo usa los campos del form).
@@ -95,7 +97,7 @@ Prompts siempre con: `[1080p, iPhone 17 Pro camera texture, natural indoor light
 
 ## Próximos pasos
 0. Reconstruir los 4 workflows en la instancia nueva (empezando por FILTRO) y crear sus credenciales.
-   - FILTRO: ✅ activo (`ck3GRVqwVUd8PKMv`). RESEARCH: ✅ activo (`DFytSB97JBn7sr39`). Falta reconstruir GUION y GANCHO en la instancia nueva.
+   - FILTRO: ✅ activo (`ck3GRVqwVUd8PKMv`). Estudio de Mercado / RESEARCH: ✅ activo (`DFytSB97JBn7sr39`). Falta reconstruir GUION y GANCHO en la instancia nueva.
 1. Probar GANCHO end-to-end con producto real (ensamblado Cloudinary).
 2. Orquestador que dispare GANCHO ×4 en paralelo con los 4 guiones de GUION.
 3. Producto nuevo: pedir foto mockup fondo blanco (URL pública) para Vision.
