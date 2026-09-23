@@ -40,10 +40,20 @@ Genera vídeos UGC estilo iPhone (hiperrealistas, no cinematográficos) en 9:16 
 - (ID viejo `mpu45nja4mcWxGId` = sistema antiguo, ya no existe.)
 - Nota de red: `n8n.io`, `api.n8n.io` y `docs.n8n.io` siguen bloqueados por la política de red del entorno pese a estar en la lista de hosts a permitir — hay que añadirlos en Settings → Network del entorno si se quiere que Claude navegue la librería de templates directamente en n8n.io (por ahora se busca vía WebSearch + mirrors en GitHub, que sí son accesibles).
 
-### 2 — RESEARCH (ID `WzYGgzmCBNv4lEom`) ✅ creado — 12 nodos
-- Trigger manual. 5 llamadas Claude en cascada: Schwartz Awareness, RMBC, Psicografía, Documento Unificado, Winning Angles.
-- Vision de la foto del producto → `descripcion_visual` se propaga a todos los prompts.
-- Output: 3 winning angles rankeados → Telegram.
+### 2 — RESEARCH (ID nuevo `DFytSB97JBn7sr39`, instancia a550a) ✅ ACTIVO en producción
+- (ID viejo `WzYGgzmCBNv4lEom` = sistema antiguo, ya no existe.)
+- **Basado en plantilla real de n8n** ("Compare sequential, agent-based, and parallel LLM processing with Claude 3.7", n8n.io/workflows/3527): varios nodos Anthropic encadenados, cada uno referenciando la salida del anterior — mismo patrón que esa plantilla.
+- **Trigger**: `n8n Form Trigger` en `https://primary-production-a550a.up.railway.app/form/research-form-trigger` — formulario con 4 campos: Nicho, Producto, Geografía, Detalles adicionales (opcional). Se lanza a mano rellenando el form (no hace falta tocar el workflow).
+- **9 nodos**: Form Trigger → 6 nodos Anthropic en cascada (cada uno usa el nodo estándar `@n8n/n8n-nodes-langchain.anthropic`, resource "text"/operation "message" — no el nodo AI Agent, para evitar el bug de streaming de FILTRO) → `Preparar Mensajes Telegram` (Code, trocea cada sección en mensajes ≤3500 caracteres) → `Telegram - Enviar Research` (manda 4 mensajes secuenciales al chat `541043415`, confirmado real en las pruebas de FILTRO).
+- **Los 6 prompts en cascada** (texto exacto proporcionado por el usuario, en `[NICHO]`/`[PRODUCTO]`/`[GEOGRAFÍA]` se sustituyen los campos del form):
+  1. `1 - Conciencia de Mercado` — niveles de Eugene Schwartz + resumen de 3 líneas para el prompt 3.
+  2. `2 - Competidores` — presencia orgánica, landing, voz del cliente, brechas (independiente de 1, solo usa los campos del form).
+  3. `3 - Psicografia RMBC` — usa la salida completa de 1 como contexto de mercado.
+  4. `4 - Documento Unificado` — usa las salidas de 1+2+3.
+  5. `5 - Mecanismo Unico (UMP-UMS)` — usa la salida de 4, genera ≥5 mecanismos con el hook de los primeros 3 segundos ya redactado.
+  6. `6 - Ranking Ganchos Ganadores` — usa las salidas de 4+5, rankea y para el top 3 dice el hook exacto, qué plantilla de gancho (El Robo / El Descubrimiento Mágico / Tutorial en Loop) encaja, y una idea de escena inicial. Termina con sección "🏆 TOP 3 GANCHOS GANADORES" — este es el output que más le importa al usuario, pensado para pasar directo a GUION/GANCHO.
+- **Prompt 7 (auditoría de landing existente) queda fuera de este workflow a propósito**: necesita que el usuario pegue una landing ya creada, es una herramienta distinta (auditor, no investigación inicial) — se puede construir aparte más adelante si se pide.
+- Reutiliza las credenciales de FILTRO: Anthropic `Anthropic account 2` (`gOgpOMeVH3GoNfho`) y Telegram `Telegram Bot FILTRO` (`uBmcPl6gZZxlWZjg`). No hizo falta crear credenciales nuevas.
 
 ### 3 — GUION (ID `X0EJqQdvHCVEyEQQ`) ✅ creado
 - Trigger manual. Descarga vídeo viral de Drive → Gemini 2.5 Flash (transcripción + escenas + timing) → Claude genera 4 guiones (1 réplica + 3 ángulos).
@@ -85,7 +95,7 @@ Prompts siempre con: `[1080p, iPhone 17 Pro camera texture, natural indoor light
 
 ## Próximos pasos
 0. Reconstruir los 4 workflows en la instancia nueva (empezando por FILTRO) y crear sus credenciales.
-   - FILTRO: ✅ activo (`ck3GRVqwVUd8PKMv`). Falta reconstruir RESEARCH, GUION y GANCHO en la instancia nueva.
+   - FILTRO: ✅ activo (`ck3GRVqwVUd8PKMv`). RESEARCH: ✅ activo (`DFytSB97JBn7sr39`). Falta reconstruir GUION y GANCHO en la instancia nueva.
 1. Probar GANCHO end-to-end con producto real (ensamblado Cloudinary).
 2. Orquestador que dispare GANCHO ×4 en paralelo con los 4 guiones de GUION.
 3. Producto nuevo: pedir foto mockup fondo blanco (URL pública) para Vision.
