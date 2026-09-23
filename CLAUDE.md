@@ -9,11 +9,12 @@ Genera vídeos UGC estilo iPhone (hiperrealistas, no cinematográficos) en 9:16 
 
 ## Acceso a n8n desde sesiones en la nube
 - Variables de entorno: `N8N_BASE_URL` y `N8N_API_KEY` (cabecera `X-N8N-API-KEY`, API en `/api/v1`).
-- Conexión verificada contra `https://primary-production-a550a.up.railway.app` (devolvió 0 workflows).
-- ⚠️ PENDIENTE: el contexto original cita la instancia `primary-production-863df.up.railway.app`, donde viven los workflows de abajo. Confirmar con el usuario cuál es la buena.
-- En la nube no hay n8n-mcp: se trabaja con la API REST de n8n. Hosts a permitir en la red del entorno: la instancia de n8n, `n8n.io`, `api.n8n.io`.
+- Instancia actual (la buena): `https://primary-production-a550a.up.railway.app`. Conexión verificada.
+- La instancia antigua `primary-production-863df` ya NO se usa. El usuario borró todo para empezar de cero.
+- ⚠️ Los workflows, IDs y credenciales de abajo son del sistema ANTIGUO: sirven como plano de diseño, pero hay que reconstruirlos en la instancia nueva (hoy tiene 0 workflows).
+- En la nube no hay n8n-mcp: se trabaja con la API REST de n8n. Hosts a permitir en la red del entorno: `primary-production-a550a.up.railway.app`, `n8n.io`, `api.n8n.io`.
 
-## Arquitectura (secuencia)
+## Arquitectura (secuencia) — diseño de referencia del sistema antiguo
 [1] FILTRO → [2] RESEARCH → [3] GUION → [4] GANCHO (genera vídeo)
 
 ### 1 — FILTRO (ID `mpu45nja4mcWxGId`) ✅ en producción — NO modificar sin petición explícita
@@ -42,7 +43,7 @@ Genera vídeos UGC estilo iPhone (hiperrealistas, no cinematográficos) en 9:16 
 | 5 Ensamblado | Cloudinary (concat 4 vídeos + 4 audios, firma SHA1) | Pendiente probar |
 | 6 Distribución | Telegram → el usuario publica a mano | ✅ |
 
-## Credenciales en n8n (IDs, no secretos)
+## Credenciales del sistema antiguo (IDs obsoletos; hay que crearlas de nuevo)
 - APIMart API Key `7FF7nxmKOz1QrqfN` (Bearer)
 - ImgBB API Key `IG4YW9DHezltqzib` (query auth)
 - Telegram Bot Ganchos `ak4k0D7rzTnLfDaD`
@@ -65,6 +66,7 @@ Prompts siempre con: `[1080p, iPhone 17 Pro camera texture, natural indoor light
 - Publicación manual desde el móvil vía Telegram (TikTok penaliza subidas por API).
 
 ## Próximos pasos
+0. Reconstruir los 4 workflows en la instancia nueva (empezando por FILTRO) y crear sus credenciales.
 1. Probar GANCHO end-to-end con producto real (ensamblado Cloudinary).
 2. Orquestador que dispare GANCHO ×4 en paralelo con los 4 guiones de GUION.
 3. Producto nuevo: pedir foto mockup fondo blanco (URL pública) para Vision.
