@@ -17,10 +17,16 @@ Genera vídeos UGC estilo iPhone (hiperrealistas, no cinematográficos) en 9:16 
 ## Arquitectura (secuencia) — diseño de referencia del sistema antiguo
 [1] FILTRO → [2] RESEARCH → [3] GUION → [4] GANCHO (genera vídeo)
 
-### 1 — FILTRO (ID `mpu45nja4mcWxGId`) ✅ en producción — NO modificar sin petición explícita
-- Trigger: bot de Telegram recibe URL de producto.
-- 7 checks Organic Ecom: WOW / grabable / precio / 4.5★ / proveedor / envío / precio final con envío.
-- Output: HTML a Telegram con 🟢🔴🟡 por check + veredicto + score.
+### 1 — FILTRO (ID nuevo `ck3GRVqwVUd8PKMv`, instancia a550a) ⚠️ creado, INACTIVO — falta credencial Anthropic
+- 5 nodos: Telegram Trigger → Code (extraer texto/URL + chat_id) → Anthropic (Claude analiza los 7 checks, devuelve JSON) → Code (formatea HTML) → Telegram (responde en el mismo chat).
+- 7 checks Organic Ecom: WOW / grabable / precio / 4.5★ / proveedor / envío / precio final con envío. Si Claude no tiene datos suficientes para un check, lo marca 🟡 en vez de inventar.
+- Output: HTML a Telegram con 🟢🔴🟡 por check + veredicto (APTO/NO APTO/REVISAR) + score /100.
+- Credencial Telegram `Telegram Bot FILTRO` (id `uBmcPl6gZZxlWZjg`) creada con `TELEGRAM_BOT_TOKEN` del entorno. ✅
+- Credencial Anthropic: **pendiente**. No existe `ANTHROPIC_API_KEY` en las variables de entorno de las sesiones en la nube (solo `ANTHROPIC_BASE_URL`, que es interno de Claude Code y no sirve como API key). Sin ella, n8n rechaza activar el workflow (`Missing required credential: anthropicApi`).
+  - Opción A: el usuario añade `ANTHROPIC_API_KEY` en la configuración del entorno (menú del entorno en la sesión → Edit) para que Claude pueda crear la credencial automáticamente.
+  - Opción B: el usuario abre n8n → nodo "Anthropic - Analizar 7 Checks" → crea la credencial `anthropicApi` pegando la clave ahí directamente (nunca por chat).
+- (ID viejo `mpu45nja4mcWxGId` = sistema antiguo, ya no existe.)
+- Nota de red: `n8n.io` y `api.n8n.io` siguen bloqueados por la política de red del entorno pese a estar en la lista de hosts a permitir — hay que añadirlos en Settings → Network del entorno si se quiere que Claude busque templates directamente en la librería de n8n.io.
 
 ### 2 — RESEARCH (ID `WzYGgzmCBNv4lEom`) ✅ creado — 12 nodos
 - Trigger manual. 5 llamadas Claude en cascada: Schwartz Awareness, RMBC, Psicografía, Documento Unificado, Winning Angles.
@@ -67,6 +73,7 @@ Prompts siempre con: `[1080p, iPhone 17 Pro camera texture, natural indoor light
 
 ## Próximos pasos
 0. Reconstruir los 4 workflows en la instancia nueva (empezando por FILTRO) y crear sus credenciales.
+   - FILTRO: workflow creado (`ck3GRVqwVUd8PKMv`), falta solo añadir la credencial Anthropic para poder activarlo (ver sección FILTRO arriba).
 1. Probar GANCHO end-to-end con producto real (ensamblado Cloudinary).
 2. Orquestador que dispare GANCHO ×4 en paralelo con los 4 guiones de GUION.
 3. Producto nuevo: pedir foto mockup fondo blanco (URL pública) para Vision.
