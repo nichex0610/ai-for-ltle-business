@@ -18,15 +18,17 @@ Genera vídeos UGC estilo iPhone (hiperrealistas, no cinematográficos) en 9:16 
 [1] FILTRO → [2] RESEARCH → [3] GUION → [4] GANCHO (genera vídeo)
 
 ### 1 — FILTRO (ID nuevo `ck3GRVqwVUd8PKMv`, instancia a550a) ⚠️ creado, INACTIVO — falta credencial Anthropic
-- 5 nodos: Telegram Trigger → Code (extraer texto/URL + chat_id) → Anthropic (Claude analiza los 7 checks, devuelve JSON) → Code (formatea HTML) → Telegram (responde en el mismo chat).
-- 7 checks Organic Ecom: WOW / grabable / precio / 4.5★ / proveedor / envío / precio final con envío. Si Claude no tiene datos suficientes para un check, lo marca 🟡 en vez de inventar.
+- **Basado en plantilla real de la comunidad n8n** ("Telegram AI bot with LangChain nodes", repo `enescingoz/awesome-n8n-templates`), adaptada — no un workflow inventado nodo a nodo. Patrón estándar "AI Agent": Trigger → Chat Model + AI Agent → Send, con reintento de error igual que la plantilla original.
+- 5 nodos: `Listen for incoming events` (Telegram Trigger) → `AI Agent` (nodo LangChain, alimentado por `Anthropic Chat Model` como Chat Model) → `Telegram` (envía el HTML) → si falla el envío (HTML mal formado), reintenta por la rama de error con `Correct errors` (escapa `& < > "`).
+- El `AI Agent` recibe el texto del producto y devuelve directamente el HTML final (con 🟢🔴🟡, veredicto y score) vía su `systemMessage` — sin nodos Code intermedios, tal como lo hace la plantilla original.
+- 7 checks Organic Ecom evaluados por el agente: WOW / grabable / precio / 4.5★ / proveedor / envío / precio final con envío. Si no hay datos suficientes para un check, lo marca 🟡 en vez de inventar.
 - Output: HTML a Telegram con 🟢🔴🟡 por check + veredicto (APTO/NO APTO/REVISAR) + score /100.
 - Credencial Telegram `Telegram Bot FILTRO` (id `uBmcPl6gZZxlWZjg`) creada con `TELEGRAM_BOT_TOKEN` del entorno. ✅
-- Credencial Anthropic: **pendiente**. No existe `ANTHROPIC_API_KEY` en las variables de entorno de las sesiones en la nube (solo `ANTHROPIC_BASE_URL`, que es interno de Claude Code y no sirve como API key). Sin ella, n8n rechaza activar el workflow (`Missing required credential: anthropicApi`).
+- Credencial Anthropic (nodo `Anthropic Chat Model`): **pendiente**. No existe `ANTHROPIC_API_KEY` en las variables de entorno de las sesiones en la nube (solo `ANTHROPIC_BASE_URL`, que es interno de Claude Code y no sirve como API key). Sin ella, n8n rechaza activar el workflow (`Missing required credential: anthropicApi`) — es el único bloqueo, todo lo demás ya validó correctamente contra la instancia real.
   - Opción A: el usuario añade `ANTHROPIC_API_KEY` en la configuración del entorno (menú del entorno en la sesión → Edit) para que Claude pueda crear la credencial automáticamente.
-  - Opción B: el usuario abre n8n → nodo "Anthropic - Analizar 7 Checks" → crea la credencial `anthropicApi` pegando la clave ahí directamente (nunca por chat).
+  - Opción B: el usuario abre n8n → nodo "Anthropic Chat Model" → crea la credencial `anthropicApi` pegando la clave ahí directamente (nunca por chat).
 - (ID viejo `mpu45nja4mcWxGId` = sistema antiguo, ya no existe.)
-- Nota de red: `n8n.io` y `api.n8n.io` siguen bloqueados por la política de red del entorno pese a estar en la lista de hosts a permitir — hay que añadirlos en Settings → Network del entorno si se quiere que Claude busque templates directamente en la librería de n8n.io.
+- Nota de red: `n8n.io`, `api.n8n.io` y `docs.n8n.io` siguen bloqueados por la política de red del entorno pese a estar en la lista de hosts a permitir — hay que añadirlos en Settings → Network del entorno si se quiere que Claude navegue la librería de templates directamente en n8n.io (por ahora se busca vía WebSearch + mirrors en GitHub, que sí son accesibles).
 
 ### 2 — RESEARCH (ID `WzYGgzmCBNv4lEom`) ✅ creado — 12 nodos
 - Trigger manual. 5 llamadas Claude en cascada: Schwartz Awareness, RMBC, Psicografía, Documento Unificado, Winning Angles.
